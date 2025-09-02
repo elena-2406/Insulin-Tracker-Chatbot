@@ -1,14 +1,20 @@
+import os
+from dotenv import load_dotenv
 import telebot
 import time
 import firebase_admin
 from firebase_admin import credentials, db
 
-#Inserting telegram token
-TOKEN = "8368529325:AAGNA8gpzkXwSdJyajxWKKC04p_lq-66rxk"
+load_dotenv()
+
+# Get values from .env
+TOKEN = os.getenv("TELEGRAM_TOKEN")
+FIREBASE_KEY = os.getenv("FIREBASE_KEY_PATH")
+
 bot = telebot.TeleBot(TOKEN)
 
 #Setting up firebase
-cred = credentials.Certificate("firebase key.json")
+cred = credentials.Certificate(FIREBASE_KEY)
 firebase_admin.initialize_app(cred, {
     "databaseURL": "https://insulin-shot-time-bot-default-rtdb.firebaseio.com/"
 })

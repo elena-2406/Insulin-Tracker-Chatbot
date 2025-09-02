@@ -5,9 +5,9 @@ __pycache__/
 # Virtual environments
 env/
 venv/
-
+.env
 # Sensitive files
-serviceAccountKey.json
+firebase key.json
 
 # VS Code settings
 .vscode/
