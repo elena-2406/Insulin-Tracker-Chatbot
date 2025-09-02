@@ -101,7 +101,7 @@ def reminder_loop():
                     if next_due:
                         next_due_dt = datetime.strptime(next_due, "%Y-%m-%d %H:%M:%S")
                         if datetime.now() >= next_due_dt:
-                            bot.send_message(user_id, "⏰ Time to inject your insulin! Reply with /inject <units> <hours> or just type 'Injected X units'.")
+                            bot.send_message(user_id, "⏰ Time to inject your insulin!\nReply with:\n/inject <units> <hours>\nor\njust type 'Injected X units'.")
                             # postpone next reminder until user confirms
                             new_next = (datetime.now() + timedelta(hours=settings.get("gap_hours", DEFAULT_GAP))).strftime("%Y-%m-%d %H:%M:%S")
                             set_user_settings(user_id, {"next_due": new_next})
@@ -117,7 +117,7 @@ threading.Thread(target=reminder_loop, daemon=True).start()
 @bot.message_handler(commands=['start'])
 def start(message):
     user_id = str(message.chat.id)
-    bot.reply_to(message, "👋 Hey! I'm your insulin reminder bot.\nUse /inject <units> <hours> to log injections.\nCheck /history to see past logs.\nSet defaults with /setunits and /setgap.")
+    bot.reply_to(message, "👋 Hey! I'm your insulin reminder bot!!✨\nUse:\n/inject <units> <hours> : to log injections.\n/history : to see past logs.\n/setunits and /setgap : to set Defaults")
 
 @bot.message_handler(commands=['inject'])
 def inject(message):
@@ -132,9 +132,9 @@ def inject(message):
             units = settings.get("default_units", DEFAULT_UNITS)
             gap_hours = settings.get("gap_hours", DEFAULT_GAP)
         now = log_injection(user_id, units, gap_hours)
-        bot.reply_to(message, f"✅ Logged {units} units at {now}. Next reminder in {gap_hours}h.\n{get_motivation()}")
+        bot.reply_to(message, f"✅ Logged succesfully! ✨ \nUnits: {units}\nTime: {now}\n\nNext Reminder Details:\nReminder in: {gap_hours}hours\n\n{get_motivation()}")
     except Exception as e:
-        bot.reply_to(message, "⚠️ Usage: /inject <units> <hours>\nExample: /inject 6 8")
+        bot.reply_to(message, "⚠️ Usage: /inject <units> <hours>\nBoth must be integers.\nExample: /inject 6 8")
         print("Error in /inject:", e)
 
 @bot.message_handler(commands=['history'])
@@ -142,7 +142,7 @@ def history(message):
     user_id = str(message.chat.id)
     logs = get_user_logs(user_id)
     if not logs:
-        bot.reply_to(message, "No injections logged yet.")
+        bot.reply_to(message, "No injections logged yet.\nMaybe start now!")
         return
     reply = "📝 Injection history:\n"
     for k, v in logs.items():
@@ -190,7 +190,7 @@ def next_due(message):
     delta = next_time - datetime.now()
     hours, remainder = divmod(int(delta.total_seconds()), 3600)
     minutes = remainder // 60
-    bot.reply_to(message, f"⏳ Next injection due in {hours}h {minutes}m at {next_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    bot.reply_to(message, f"⏳ Next injection is due {hours}hours & {minutes}minutes from now {next_time.strftime('%Y-%m-%d %H:%M:%S')}")
 
 #BASIC MESSAGES
 
@@ -206,7 +206,7 @@ def natural_message_handler(message):
         settings = get_user_settings(user_id)
         gap_hours = settings.get("gap_hours", DEFAULT_GAP)
         now = log_injection(user_id, units, gap_hours)
-        bot.reply_to(message, f"✅ Logged {units} units at {now}. Next reminder in {gap_hours}h.\n{get_motivation()}")
+        bot.reply_to(message, f"✅ Logged successfully!\nUnits: {units} units\nTime: {now}\n\n Next reminder:\nIn {gap_hours}hours\n{get_motivation()}")
         return
 
     # Match "skipped"
