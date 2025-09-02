@@ -18,13 +18,13 @@ DB_URL = "https://insulin-shot-time-bot-default-rtdb.firebaseio.com/"
 
 bot = telebot.TeleBot(TOKEN)
 
-# Setting up firebase
-# The credentials.Certificate() method expects a file path string
+#Setting up firebase
+#The credentials.Certificate() method expects a file path string
 cred = credentials.Certificate(FIREBASE_KEY_PATH)
 firebase_admin.initialize_app(cred, {
     "databaseURL": DB_URL
 })
-import time
+print("firebase connected")
 
 DEFAULT_GAP = 4      # default hours between injections
 DEFAULT_UNITS = 6    # default insulin units
@@ -84,31 +84,7 @@ def reminder_loop():
 
 threading.Thread(target=reminder_loop, daemon=True).start()
 
-#BASIC MESSAGES
 
-@bot.message_handler(func=lambda m: True)
-def natural_message_handler(message):
-    user_id = str(message.chat.id)
-    text = message.text.lower()
-
-    # Match "Injected X units"
-    match = re.match(r'injected (\d+) units?', text)
-    if match:
-        units = int(match.group(1))
-        settings = get_user_settings(user_id)
-        gap_hours = settings.get("gap_hours", DEFAULT_GAP)
-        now = log_injection(user_id, units, gap_hours)
-        bot.reply_to(message, f"✅ Logged {units} units at {now}. Next reminder in {gap_hours}h.")
-        return
-
-    # Match "skipped"
-    if 'skipped' in text:
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        ref = db.reference(f"injections/{user_id}")
-        ref.push({"time": now, "units": 0, "gap_hours": 0, "skipped": True})
-        bot.reply_to(message, f"⚠️ Logged as skipped at {now}.")
-        return
-    
 #ALL OTHER COMMANDS
 
 @bot.message_handler(commands=['start'])
@@ -189,5 +165,44 @@ def next_due(message):
     minutes = remainder // 60
     bot.reply_to(message, f"⏳ Next injection due in {hours}h {minutes}m at {next_time.strftime('%Y-%m-%d %H:%M:%S')}")
 
+#BASIC MESSAGES
+
+@bot.message_handler(func=lambda m: True)
+def natural_message_handler(message):
+    user_id = str(message.chat.id)
+    text = message.text.lower()
+
+    # Match "Injected X units"
+    match = re.match(r'injected (\d+) units?', text)
+    if match:
+        units = int(match.group(1))
+        settings = get_user_settings(user_id)
+        gap_hours = settings.get("gap_hours", DEFAULT_GAP)
+        now = log_injection(user_id, units, gap_hours)
+        bot.reply_to(message, f"✅ Logged {units} units at {now}. Next reminder in {gap_hours}h.")
+        return
+
+    # Match "skipped"
+    if 'skipped' in text:
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ref = db.reference(f"injections/{user_id}")
+        ref.push({"time": now, "units": 0, "gap_hours": 0, "skipped": True})
+        bot.reply_to(message, f"⚠️ Logged as skipped at {now}.")
+        return
+    
+
 print("Bot is running...")
-bot.infinity_polling()
+def run_bot():
+    try:
+        bot.infinity_polling(timeout=10, long_polling_timeout = 5)
+    except Exception as e:
+        print("Polling error:", e)
+        time.sleep(5)
+        run_bot()
+run_bot()
+
+@bot.message_handler(func=lambda message: True)
+def debug_all(message):
+    print(f"DEBUG: got message '{message.text}' from {message.chat.id}")
+    bot.reply_to(message, "⚡ Debug mode: I heard you!")
+
