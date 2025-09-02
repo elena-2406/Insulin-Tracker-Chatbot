@@ -9,6 +9,7 @@ import re
 from datetime import datetime, timedelta
 import json
 import io
+import random
 load_dotenv()
 
 # Get values from .env
@@ -17,6 +18,32 @@ FIREBASE_KEY_PATH = os.getenv("FIREBASE_KEY_PATH")
 DB_URL = "https://insulin-shot-time-bot-default-rtdb.firebaseio.com/"
 
 bot = telebot.TeleBot(TOKEN)
+
+
+MOTIVATIONAL_QUOTES = [
+    "💪 Great job taking care of yourself!",
+    "🌟 You’re doing amazing, keep it up!",
+    "👏 Proud of you for staying consistent!",
+    "🔥 That’s discipline right there!",
+    "🙌 You got this—one step at a time!",
+    "✨ Small wins add up to big results!",
+    "🫶 Your future self thanks you!"
+]
+
+SKIP_MESSAGES = [
+    "⚠️ Skipped this time—but remember, consistency is key! 🌱",
+    "⏭️ You skipped—no worries, just get back on track next time! 💪",
+    "🚦 Pause today, but don’t make it a habit. You’re stronger than you think! ✨",
+    "🙌 One skip won’t break your progress, but try to stay regular!",
+    "🌟 Skipped—consider setting a reminder to stay consistent!",
+    "🧘 Skipping once is okay, just don’t let it become the routine!",
+    "🔥 Remember: showing up for yourself matters most!"
+]
+def get_motivation():
+    return random.choice(MOTIVATIONAL_QUOTES)
+
+def get_skip():
+    return random.choice(SKIP_MESSAGES)
 
 #Setting up firebase
 #The credentials.Certificate() method expects a file path string
@@ -105,7 +132,7 @@ def inject(message):
             units = settings.get("default_units", DEFAULT_UNITS)
             gap_hours = settings.get("gap_hours", DEFAULT_GAP)
         now = log_injection(user_id, units, gap_hours)
-        bot.reply_to(message, f"✅ Logged {units} units at {now}. Next reminder in {gap_hours}h.")
+        bot.reply_to(message, f"✅ Logged {units} units at {now}. Next reminder in {gap_hours}h.\n{get_motivation()}")
     except Exception as e:
         bot.reply_to(message, "⚠️ Usage: /inject <units> <hours>\nExample: /inject 6 8")
         print("Error in /inject:", e)
@@ -179,7 +206,7 @@ def natural_message_handler(message):
         settings = get_user_settings(user_id)
         gap_hours = settings.get("gap_hours", DEFAULT_GAP)
         now = log_injection(user_id, units, gap_hours)
-        bot.reply_to(message, f"✅ Logged {units} units at {now}. Next reminder in {gap_hours}h.")
+        bot.reply_to(message, f"✅ Logged {units} units at {now}. Next reminder in {gap_hours}h.\n{get_motivation()}")
         return
 
     # Match "skipped"
@@ -187,7 +214,7 @@ def natural_message_handler(message):
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         ref = db.reference(f"injections/{user_id}")
         ref.push({"time": now, "units": 0, "gap_hours": 0, "skipped": True})
-        bot.reply_to(message, f"⚠️ Logged as skipped at {now}.")
+        bot.reply_to(message, f"⚠️ Logged as skipped at {now}.\n{get_skip()}")
         return
     
 
