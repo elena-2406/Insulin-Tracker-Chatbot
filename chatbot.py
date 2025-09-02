@@ -83,3 +83,28 @@ def reminder_loop():
         time.sleep(60)
 
 threading.Thread(target=reminder_loop, daemon=True).start()
+
+#BASIC MESSAGES
+
+@bot.message_handler(func=lambda m: True)
+def natural_message_handler(message):
+    user_id = str(message.chat.id)
+    text = message.text.lower()
+
+    # Match "Injected X units"
+    match = re.match(r'injected (\d+) units?', text)
+    if match:
+        units = int(match.group(1))
+        settings = get_user_settings(user_id)
+        gap_hours = settings.get("gap_hours", DEFAULT_GAP)
+        now = log_injection(user_id, units, gap_hours)
+        bot.reply_to(message, f"✅ Logged {units} units at {now}. Next reminder in {gap_hours}h.")
+        return
+
+    # Match "skipped"
+    if 'skipped' in text:
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ref = db.reference(f"injections/{user_id}")
+        ref.push({"time": now, "units": 0, "gap_hours": 0, "skipped": True})
+        bot.reply_to(message, f"⚠️ Logged as skipped at {now}.")
+        return
