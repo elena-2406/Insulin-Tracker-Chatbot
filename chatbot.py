@@ -188,3 +188,6 @@ def next_due(message):
     hours, remainder = divmod(int(delta.total_seconds()), 3600)
     minutes = remainder // 60
     bot.reply_to(message, f"⏳ Next injection due in {hours}h {minutes}m at {next_time.strftime('%Y-%m-%d %H:%M:%S')}")
+
+print("Bot is running...")
+bot.infinity_polling()
