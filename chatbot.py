@@ -48,18 +48,3 @@ def get_user_settings(user_id):
     ref = db.reference(f"settings/{user_id}")
     return ref.get()
 
-@bot.message_handler(commands=['inject'])
-def inject(message):
-    try:
-        parts = message.text.split()
-        units = int(parts[1])
-        hours = int(parts[2])
-        user_id = str(message.chat.id)
-
-        # Save to Firebase
-        now = log_injection(user_id, units, hours)
-
-        bot.reply_to(message, f"✅ Logged {units} units at {now}. Next reminder in {hours}h.")
-    except Exception as e:
-        bot.reply_to(message, "⚠️ Usage: /inject <units> <hours>\nExample: /inject 6 8")
-        print("Error in /inject:", e)
