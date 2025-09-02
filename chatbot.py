@@ -4,17 +4,19 @@ import telebot
 import time
 import firebase_admin
 from firebase_admin import credentials, db
-
+import json
+import io
 load_dotenv()
 
 # Get values from .env
 TOKEN = os.getenv("TELEGRAM_TOKEN")
-FIREBASE_KEY = os.getenv("FIREBASE_KEY_PATH")
+FIREBASE_KEY_PATH = os.getenv("FIREBASE_KEY_PATH")
 
 bot = telebot.TeleBot(TOKEN)
 
-#Setting up firebase
-cred = credentials.Certificate(FIREBASE_KEY)
+# Setting up firebase
+# The credentials.Certificate() method expects a file path string
+cred = credentials.Certificate(FIREBASE_KEY_PATH)
 firebase_admin.initialize_app(cred, {
     "databaseURL": "https://insulin-shot-time-bot-default-rtdb.firebaseio.com/"
 })
